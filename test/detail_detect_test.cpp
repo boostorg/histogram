@@ -12,6 +12,7 @@
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/detect.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <deque>
 #include <initializer_list>
@@ -104,6 +105,18 @@ int main() {
     BOOST_TEST_TRAIT_FALSE((is_map_like<C>));
     BOOST_TEST_TRAIT_TRUE((is_map_like<D>));
     BOOST_TEST_TRAIT_TRUE((is_map_like<E>));
+  }
+
+  // has_node_access
+  {
+    using A = storage_adaptor<std::map<std::size_t, double>>;
+    using B = storage_adaptor<std::unordered_map<std::size_t, double>>;
+    using C = storage_adaptor<std::vector<double>>;
+    using D = unlimited_storage<>;
+    BOOST_TEST_TRAIT_TRUE((has_node_access<A>));
+    BOOST_TEST_TRAIT_TRUE((has_node_access<B>));
+    BOOST_TEST_TRAIT_FALSE((has_node_access<C>));
+    BOOST_TEST_TRAIT_FALSE((has_node_access<D>));
   }
 
   // is_axis

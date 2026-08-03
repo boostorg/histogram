@@ -450,8 +450,7 @@ public:
   operator+=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
-    auto rit = unsafe_access::storage(rhs).begin();
-    for (auto&& x : storage_) x += *rit++;
+    add_storage(unsafe_access::storage(rhs));
     return *this;
   }
 
@@ -467,8 +466,7 @@ public:
   operator+=(const histogram<axes_type, S>& rhs) {
     const auto& raxes = unsafe_access::axes(rhs);
     if (detail::axes_equal(axes_, unsafe_access::axes(rhs))) {
-      auto rit = unsafe_access::storage(rhs).begin();
-      for (auto&& x : storage_) x += *rit++;
+      add_storage(unsafe_access::storage(rhs));
       return *this;
     }
 
@@ -501,8 +499,7 @@ public:
   operator-=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
-    auto rit = unsafe_access::storage(rhs).begin();
-    for (auto&& x : storage_) x -= *rit++;
+    sub_storage(unsafe_access::storage(rhs));
     return *this;
   }
 
@@ -611,6 +608,36 @@ public:
   }
 
 private:
+  template <class OtherStorage>
+  void add_storage(const OtherStorage& rs) {
+    detail::static_if<detail::has_node_access<OtherStorage>>(
+        [this](const auto& s) {
+          // sparse rhs: visit only the stored cells, absent cells add zero;
+          // the bounds check guards against stray keys from a corrupt archive
+          for (auto&& kv : s.node_access())
+            if (kv.first < storage_.size()) storage_[kv.first] += kv.second;
+        },
+        [this](const auto& s) {
+          auto rit = s.begin();
+          for (auto&& x : storage_) x += *rit++;
+        },
+        rs);
+  }
+
+  template <class OtherStorage>
+  void sub_storage(const OtherStorage& rs) {
+    detail::static_if<detail::has_node_access<OtherStorage>>(
+        [this](const auto& s) {
+          for (auto&& kv : s.node_access())
+            if (kv.first < storage_.size()) storage_[kv.first] -= kv.second;
+        },
+        [this](const auto& s) {
+          auto rit = s.begin();
+          for (auto&& x : storage_) x -= *rit++;
+        },
+        rs);
+  }
+
   axes_type axes_;
   storage_type storage_;
   std::size_t offset_ = 0;
