@@ -82,9 +82,9 @@ static void ShrinkAndRebin(benchmark::State& state, Tag, boost::mp11::mp_int<Dim
   run_reduce(state, h, opts);
 }
 
-#define BENCH(Type, Tag, Dim)                                 \
+#define BENCH(Type, Tag, Dim)                              \
   BENCHMARK_CAPTURE(Type, (Tag, Dim), Tag{}, Dim_t<Dim>{}) \
-      ->RangeMultiplier(4)                                    \
+      ->RangeMultiplier(4)                                 \
       ->Range(4, 256)
 
 BENCH(Rebin, dense, 1);

@@ -382,6 +382,8 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
                 // example [1, 4] with merge = 2 is reduced to [1, 3]
                 o.end.index -=
                     (o.end.index - o.begin.index) % static_cast<index_type>(o.merge);
+                o.reduced_end =
+                    (o.end.index - o.begin.index) / static_cast<index_type>(o.merge);
                 using A = std::decay_t<decltype(a_in)>;
                 return A(a_in, o.begin.index, o.end.index, o.merge);
               },
@@ -398,15 +400,13 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
           o.merge = 1;
           o.begin.index = 0;
           o.end.index = a_in.size();
+          o.reduced_end = a_in.size();
           return a_in;
         }
       });
 
   auto result =
       Histogram(std::move(axes), detail::make_default(unsafe_access::storage(hist)));
-
-  for (auto& o : opts)
-    o.reduced_end = (o.end.index - o.begin.index) / static_cast<index_type>(o.merge);
 
   auto idx = detail::make_stack_buffer<index_type>(unsafe_access::axes(result));
   for (auto&& x : indexed(hist, coverage::all)) {
