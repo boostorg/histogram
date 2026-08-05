@@ -38,6 +38,7 @@ add_benchmark(axis_size)
 add_benchmark(axis_index)
 add_benchmark(histogram_filling)
 add_benchmark(histogram_iteration)
+add_benchmark(histogram_reduce)
 add_benchmark(detail_normal)
 
 find_package(Threads)

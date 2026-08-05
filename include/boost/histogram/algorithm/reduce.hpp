@@ -382,6 +382,8 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
                 // example [1, 4] with merge = 2 is reduced to [1, 3]
                 o.end.index -=
                     (o.end.index - o.begin.index) % static_cast<index_type>(o.merge);
+                o.reduced_end =
+                    (o.end.index - o.begin.index) / static_cast<index_type>(o.merge);
                 using A = std::decay_t<decltype(a_in)>;
                 return A(a_in, o.begin.index, o.end.index, o.merge);
               },
@@ -398,6 +400,7 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
           o.merge = 1;
           o.begin.index = 0;
           o.end.index = a_in.size();
+          o.reduced_end = a_in.size();
           return a_in;
         }
       });
@@ -420,11 +423,9 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
         if (*i >= 0)
           *i /= static_cast<index_type>(o->merge);
         else
-          *i = o->end.index;
-        const auto reduced_axis_end =
-            (o->end.index - o->begin.index) / static_cast<index_type>(o->merge);
-        if (*i >= reduced_axis_end) {
-          *i = reduced_axis_end;
+          *i = o->reduced_end;
+        if (*i >= o->reduced_end) {
+          *i = o->reduced_end;
           if (!o->use_overflow_bin) skip = true;
         }
       }
