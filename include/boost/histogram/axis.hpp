@@ -19,7 +19,10 @@
 
 #include <boost/histogram/axis/boolean.hpp>
 #include <boost/histogram/axis/category.hpp>
+#include <boost/histogram/axis/int_resolver.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/piece.hpp>
+#include <boost/histogram/axis/piecewise.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
