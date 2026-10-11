@@ -7,6 +7,10 @@
 
 [section:changelog Changelog]
 
+[heading Boost 1.93]
+
+* Make `indexed_range::accessor` move constructible, which is required by `std::generate` in libc++ 21
+
 [heading Boost 1.89]
 
 * Update CMake minimum version and Python detection in CMake
