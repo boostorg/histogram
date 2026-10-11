@@ -16,7 +16,7 @@ namespace histogram {
 
   You should not construct these directly, use the weight() helper function.
 
-  @tparam Underlying arithmetic type.
+  @tparam T Underlying arithmetic type.
 */
 template <class T>
 struct weight_type {

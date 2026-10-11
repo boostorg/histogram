@@ -17,7 +17,7 @@ namespace histogram {
 
   You should not construct these directly, use the sample() helper function.
 
-  @tparam Underlying type.
+  @tparam T Underlying type.
 */
 template <class T>
 struct sample_type {
