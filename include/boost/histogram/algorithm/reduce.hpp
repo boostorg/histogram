@@ -425,8 +425,7 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
                   o.lut.assign(a_in.size() + 1, o.end.index);
                   for (index_type k = 0; k < o.end.index; ++k) o.lut[o.indices[k]] = k;
                   return std::decay_t<decltype(a_in)>(
-                      a_in, axis::pick_tag{}, o.indices.data(),
-                      o.indices.data() + o.indices.size());
+                      a_in, o.indices.data(), o.indices.data() + o.indices.size());
                 },
                 [iaxis](const auto& a_in) {
                   return BOOST_THROW_EXCEPTION(std::invalid_argument(

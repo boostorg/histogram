@@ -146,7 +146,7 @@ public:
   }
 
   /// Constructor used by algorithm::reduce to pick arbitrary bins (not for users).
-  category(const category& src, pick_tag, const index_type* begin, const index_type* end)
+  category(const category& src, const index_type* begin, const index_type* end)
       : metadata_base(src), vec_(src.get_allocator()) {
     vec_.reserve(static_cast<std::size_t>(end - begin));
     for (; begin != end; ++begin) vec_.emplace_back(src.vec_[*begin]);
