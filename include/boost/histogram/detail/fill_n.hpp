@@ -100,6 +100,24 @@ struct index_visitor {
   }
 
   template <class T>
+  void scalar_linearize(std::true_type, index_type& idx, const T& value) const {
+    // must use this code for all axes if one of them is growing
+    axis::index_type shift;
+    linearize_growth(idx, shift, stride_, axis_,
+                     try_cast<value_type, std::invalid_argument>(value));
+    // No index shifts to apply if the zero-point changes, since all entries
+    // receive the same contribution which is computed after the growth, but
+    // the shift must be recorded so that the storage is resized correctly.
+    if (shift > 0) *shift_ += shift;
+  }
+
+  template <class T>
+  void scalar_linearize(std::false_type, index_type& idx, const T& value) const {
+    // no axis is growing
+    linearize(idx, stride_, axis_, try_cast<value_type, std::invalid_argument>(value));
+  }
+
+  template <class T>
   void call_1(std::true_type, const T& value) const {
     // T is compatible value; fill single value N times
 
@@ -114,19 +132,7 @@ struct index_visitor {
     // underflow bin is -stride_ and the index type is unsigned. The bias is
     // subtracted again when the delta is computed.
     index_type idx{stride_};
-    if (IsGrowing::value) {
-      // IsGrowing::value is a compile-time constant, the dead branch is
-      // eliminated; linearize_growth also handles non-growing axes.
-      axis::index_type shift;
-      linearize_growth(idx, shift, stride_, axis_,
-                       try_cast<value_type, std::invalid_argument>(value));
-      // No index shifts to apply if the zero-point changes, since all entries
-      // receive the same contribution which is computed after the growth, but
-      // the shift must be recorded so that the storage is resized correctly.
-      if (shift > 0) *shift_ += shift;
-    } else {
-      linearize(idx, stride_, axis_, try_cast<value_type, std::invalid_argument>(value));
-    }
+    scalar_linearize(IsGrowing{}, idx, value);
     if (is_valid(idx)) {
       // The double cast is intentional, not superfluous. The inner std::size_t
       // cast extracts the raw value, because Index is optional_index for
