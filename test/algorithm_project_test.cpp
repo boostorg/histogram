@@ -8,8 +8,8 @@
 #include <boost/histogram/algorithm/project.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/ostream.hpp>
+#include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <vector>
