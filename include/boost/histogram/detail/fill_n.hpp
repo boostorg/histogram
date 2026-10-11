@@ -75,30 +75,32 @@ struct index_visitor {
       : axis_(a), stride_(str), start_(sta), size_(si), begin_(it), shift_(shift) {}
 
   template <class T>
-  void call_impl(std::false_type, const T& iterable) const {
-    // T is iterable; fill N values
-    const auto* tp = dtl::data(iterable) + start_;
-    if (IsGrowing::value) {
-      // must use this code for all axes if one of them is growing
-      for (auto it = begin_; it != begin_ + size_; ++it) {
-        axis::index_type shift;
-        linearize_growth(*it, shift, stride_, axis_,
-                         try_cast<value_type, std::invalid_argument>(*tp++));
-        if (shift > 0) { // shift previous indices, because axis zero-point has changed
-          while (it != begin_) *--it += static_cast<std::size_t>(shift) * stride_;
-          *shift_ += shift;
-        }
-      }
-    } else {
-      // no axis is growing
-      for (auto it = begin_; it != begin_ + size_; ++it)
-        linearize(*it, stride_, axis_,
-                  try_cast<value_type, std::invalid_argument>(*tp++));
+  void call_2(std::true_type, pointer it, const T& x) const {
+    // must use this code for all axes if one of them is growing
+    axis::index_type shift;
+    linearize_growth(*it, shift, stride_, axis_,
+                     try_cast<value_type, std::invalid_argument>(x));
+    if (shift > 0) { // shift previous indices, because axis zero-point has changed
+      while (it != begin_) *--it += static_cast<std::size_t>(shift) * stride_;
+      *shift_ += shift;
     }
   }
 
   template <class T>
-  void call_impl(std::true_type, const T& value) const {
+  void call_2(std::false_type, pointer it, const T& x) const {
+    // no axis is growing
+    linearize(*it, stride_, axis_, try_cast<value_type, std::invalid_argument>(x));
+  }
+
+  template <class T>
+  void call_1(std::false_type, const T& iterable) const {
+    // T is iterable; fill N values
+    const auto* tp = dtl::data(iterable) + start_;
+    for (auto it = begin_; it != begin_ + size_; ++it) call_2(IsGrowing{}, it, *tp++);
+  }
+
+  template <class T>
+  void call_1(std::true_type, const T& value) const {
     // T is compatible value; fill single value N times
 
     // Compute the contribution of this axis to the linear index once on a
@@ -143,7 +145,7 @@ struct index_visitor {
 
   template <class T>
   void operator()(const T& iterable_or_value) const {
-    call_impl(mp11::mp_bool<(std::is_convertible<T, value_type>::value ||
+    call_1(mp11::mp_bool<(std::is_convertible<T, value_type>::value ||
                           !is_iterable<T>::value)>{},
            iterable_or_value);
   }
