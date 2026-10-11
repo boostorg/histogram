@@ -75,7 +75,21 @@ struct index_visitor {
       : axis_(a), stride_(str), start_(sta), size_(si), begin_(it), shift_(shift) {}
 
   template <class T>
-  void call_2(std::true_type, pointer it, const T& x) const {
+  void operator()(const T& iterable_or_value) const {
+    dispatch_on_value_or_iterable(mp11::mp_bool<(std::is_convertible<T, value_type>::value ||
+                          !is_iterable<T>::value)>{},
+           iterable_or_value);
+  }
+
+  template <class T>
+  void dispatch_on_value_or_iterable(std::false_type, const T& iterable) const {
+    // T is iterable; fill N values
+    const auto* tp = dtl::data(iterable) + start_;
+    for (auto it = begin_; it != begin_ + size_; ++it) linearize_element(IsGrowing{}, it, *tp++);
+  }  
+  
+  template <class T>
+  void linearize_element(std::true_type, pointer it, const T& x) const {
     // must use this code for all axes if one of them is growing
     axis::index_type shift;
     linearize_growth(*it, shift, stride_, axis_,
@@ -87,43 +101,60 @@ struct index_visitor {
   }
 
   template <class T>
-  void call_2(std::false_type, pointer it, const T& x) const {
+  void linearize_element(std::false_type, pointer it, const T& x) const {
     // no axis is growing
     linearize(*it, stride_, axis_, try_cast<value_type, std::invalid_argument>(x));
   }
 
   template <class T>
-  void call_1(std::false_type, const T& iterable) const {
-    // T is iterable; fill N values
-    const auto* tp = dtl::data(iterable) + start_;
-    for (auto it = begin_; it != begin_ + size_; ++it) call_2(IsGrowing{}, it, *tp++);
-  }
-
-  template <class T>
-  void call_1(std::true_type, const T& value) const {
+  void dispatch_on_value_or_iterable(std::true_type, const T& value) const {
     // T is compatible value; fill single value N times
 
-    // Optimization: We call call_2 only once and then add the index shift onto the
-    // whole array of indices, because it is always the same. This also works if the
-    // axis grows during this operation. There are no shifts to apply if the zero-point
-    // changes.
-    const auto before = *begin_;
-    call_2(IsGrowing{}, begin_, value);
-    if (is_valid(*begin_)) {
-      // since index can be std::size_t or optional_index, must do conversion here
-      const auto delta =
-          static_cast<std::intptr_t>(*begin_) - static_cast<std::intptr_t>(before);
-      for (auto it = begin_ + 1; it != begin_ + size_; ++it) *it += delta;
-    } else
+    // Compute the contribution of this axis to the linear index once on a
+    // fresh index and add it to the whole array of indices. The contribution
+    // must not be derived from the change of *begin_, because a previous axis
+    // may have already invalidated some entries, including the first one
+    // (scikit-hep/boost-histogram#960). Entries that are already invalid stay
+    // invalid, all other entries receive the same contribution.
+    //
+    // The fresh index is biased by stride_, because the contribution of an
+    // underflow bin is -stride_ and the index type is unsigned. The bias is
+    // subtracted again when the delta is computed.
+    index_type idx{stride_};
+    linearize_scalar(IsGrowing{}, idx, value);
+    if (is_valid(idx)) {
+      // The double cast is intentional. The inner std::size_t cast extracts the raw
+      // value, because Index is optional_index for growing axes and has no direct cast to
+      // std::intptr_t. The outer cast makes the subtraction signed, so that the underflow
+      // contribution (-stride_) yields a negative delta instead of wrapping to a huge
+      // positive value. Both values are bounded by the storage size, so the conversion is
+      // value-preserving, not a two's complement trick.
+      const auto delta = static_cast<std::intptr_t>(static_cast<std::size_t>(idx)) -
+                         static_cast<std::intptr_t>(stride_);
+      for (auto it = begin_; it != begin_ + size_; ++it) *it += delta;
+    } else {
       std::fill(begin_, begin_ + size_, invalid_index);
+    }
   }
 
   template <class T>
-  void operator()(const T& iterable_or_value) const {
-    call_1(mp11::mp_bool<(std::is_convertible<T, value_type>::value ||
-                          !is_iterable<T>::value)>{},
-           iterable_or_value);
+  void linearize_scalar(std::true_type, index_type& idx, const T& value) const {
+    // must use this code for all axes if one of them is growing
+    axis::index_type shift;
+    linearize_growth(idx, shift, stride_, axis_,
+                     try_cast<value_type, std::invalid_argument>(value));
+    // No index shifts to apply if the zero-point changes, since all entries
+    // receive the same contribution which is computed after the growth, but
+    // the shift must be recorded so that the storage is resized correctly.
+    if (shift > 0) *shift_ += shift;
   }
+
+  template <class T>
+  void linearize_scalar(std::false_type, index_type& idx, const T& value) const {
+    // no axis is growing
+    linearize(idx, stride_, axis_, try_cast<value_type, std::invalid_argument>(value));
+  }
+
 };
 
 template <class Index, class S, class Axes, class T>

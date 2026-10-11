@@ -44,7 +44,10 @@ using ing = axis::integer<double, axis::null_type,
                           decltype(axis::option::growth | axis::option::underflow |
                                    axis::option::overflow)>;
 using cs = axis::category<std::string, axis::null_type>;
+using cs0 = axis::category<std::string, axis::null_type, axis::option::none_t>;
 using csg = axis::category<std::string, axis::null_type, axis::option::growth_t>;
+using ci = axis::category<int, axis::null_type>;
+using ci0 = axis::category<int, axis::null_type, axis::option::none_t>;
 
 struct axis2d {
   auto size() const { return axis::index_type{2}; }
@@ -345,6 +348,191 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
   }
 }
 
+// Test for GitHub issue scikit-hep/boost-histogram#960:
+// Filling with scalar value for one axis and array for another, where array contains
+// out-of-bounds values and axis has no overflow, should correctly accumulate valid
+// entries instead of producing sum of zero.
+template <class Tag>
+void run_tests_issue_960() {
+  // 2D histogram with IntCategory (no overflow) and StrCategory
+  // Bug: when filling with array for first axis (containing out-of-bounds values)
+  // and scalar for second axis, valid entries were incorrectly discarded.
+  {
+    auto h = make(Tag(), ci0{1, 2, 3}, cs{"A", "B"});
+    auto h2 = h;
+
+    // Data with out-of-bounds value (4) and valid values (1, 2, 3)
+    std::vector<int> data = {4, 1, 2, 3};
+
+    // Fill one-at-a-time (reference)
+    for (auto&& xi : data) h(xi, "A");
+
+    // Fill using array for first axis, scalar for second axis
+    using V = variant<int, std::vector<int>, std::string, std::vector<std::string>>;
+    V xy[2];
+    xy[0] = data;
+    xy[1] = "A";
+    h2.fill(xy);
+
+    BOOST_TEST_EQ(h, h2);
+    BOOST_TEST_EQ(sum(h), 3); // only 1, 2, 3 should be counted
+  }
+
+  // Same test with weight storage
+  {
+    auto h = make_s(Tag(), weight_storage(), ci0{1, 2, 3}, cs{"A", "B"});
+    auto h2 = h;
+
+    std::vector<int> data = {4, 1, 2, 3};
+    std::vector<double> w = {1.0, 1.0, 1.0, 1.0};
+
+    for (unsigned i = 0; i < data.size(); ++i) h(data[i], "A", weight(w[i]));
+
+    using V = variant<int, std::vector<int>, std::string, std::vector<std::string>>;
+    V xy[2];
+    xy[0] = data;
+    xy[1] = "A";
+    h2.fill(xy, weight(w));
+
+    BOOST_TEST_EQ(h, h2);
+    BOOST_TEST_EQ(sum(h).value(), 3); // only 1, 2, 3 should be counted
+  }
+
+  // Test with both axes having no overflow
+  {
+    auto h = make(Tag(), ci0{1, 2, 3}, cs0{"A", "B"});
+    auto h2 = h;
+
+    std::vector<int> data = {4, 1, 2, 3};
+
+    for (auto&& xi : data) h(xi, "A");
+
+    using V = variant<int, std::vector<int>, std::string, std::vector<std::string>>;
+    V xy[2];
+    xy[0] = data;
+    xy[1] = "A";
+    h2.fill(xy);
+
+    BOOST_TEST_EQ(h, h2);
+    BOOST_TEST_EQ(sum(h), 3);
+  }
+
+  // Test with out-of-bounds value at different positions in array
+  {
+    auto h = make(Tag(), ci0{1, 2, 3}, cs{"A"});
+    auto h2 = h;
+
+    // Out-of-bounds at start
+    std::vector<int> data1 = {99, 1, 2};
+    for (auto&& xi : data1) h(xi, "A");
+    using V = variant<int, std::vector<int>, std::string>;
+    V xy[2];
+    xy[0] = data1;
+    xy[1] = "A";
+    h2.fill(xy);
+    BOOST_TEST_EQ(h, h2);
+
+    // Out-of-bounds in middle
+    std::vector<int> data2 = {1, 99, 2};
+    for (auto&& xi : data2) h(xi, "A");
+    xy[0] = data2;
+    h2.fill(xy);
+    BOOST_TEST_EQ(h, h2);
+
+    // Out-of-bounds at end
+    std::vector<int> data3 = {1, 2, 99};
+    for (auto&& xi : data3) h(xi, "A");
+    xy[0] = data3;
+    h2.fill(xy);
+    BOOST_TEST_EQ(h, h2);
+
+    BOOST_TEST_EQ(sum(h), 6); // 2 valid values * 3 fills
+  }
+
+  // Test scalar for first axis, array for second axis
+  {
+    auto h = make(Tag(), ci0{1, 2, 3}, cs0{"A", "B"});
+    auto h2 = h;
+
+    std::vector<std::string> data = {"C", "A", "B"}; // "C" is out-of-bounds
+
+    for (auto&& si : data) h(1, si);
+
+    using V = variant<int, std::vector<int>, std::string, std::vector<std::string>>;
+    V xy[2];
+    xy[0] = 1;
+    xy[1] = data;
+    h2.fill(xy);
+
+    BOOST_TEST_EQ(h, h2);
+    BOOST_TEST_EQ(sum(h), 2); // only "A" and "B" should be counted
+  }
+
+  // Scalar broadcast on a growing axis, while the previous non-inclusive axis
+  // has already invalidated the first entry (growing variant of the bug)
+  {
+    auto h = make(Tag(), in0{1, 3}, csg{"X", "A"});
+    auto h2 = h;
+
+    std::vector<int> data = {0, 1, 2}; // 0 is out-of-bounds for in0{1, 3}
+
+    for (auto&& xi : data) h(xi, "A");
+
+    using V = variant<int, std::vector<int>, std::string, std::vector<std::string>>;
+    V xy[2];
+    xy[0] = data;
+    xy[1] = "A";
+    h2.fill(xy);
+
+    BOOST_TEST_EQ(h, h2);
+    BOOST_TEST_EQ(sum(h), 2);
+  }
+
+  // Scalar broadcast that triggers growth at the lower end (zero-point shift),
+  // while the previous non-inclusive axis has already invalidated the first entry
+  {
+    using ig = axis::integer<int, axis::null_type, axis::option::growth_t>;
+    auto h = make(Tag(), in0{1, 3}, ig{0, 2});
+    auto h2 = h;
+
+    std::vector<int> data = {0, 1, 2}; // 0 is out-of-bounds for in0{1, 3}
+
+    for (auto&& xi : data) h(xi, -1); // -1 grows ig downward
+    for (auto&& xi : data) h(xi, 5);  // 5 grows ig upward
+
+    using V = variant<int, std::vector<int>>;
+    V xy[2];
+    xy[0] = data;
+    xy[1] = -1;
+    h2.fill(xy);
+    xy[1] = 5;
+    h2.fill(xy);
+
+    BOOST_TEST_EQ(h, h2);
+    BOOST_TEST_EQ(sum(h), 4);
+  }
+
+  // Scalar broadcast that lands in the underflow bin (negative index
+  // contribution), while the first entry is already invalid
+  {
+    auto h = make(Tag(), in0{1, 3}, in{1, 3});
+    auto h2 = h;
+
+    std::vector<int> data = {0, 1, 2}; // 0 is out-of-bounds for in0{1, 3}
+
+    for (auto&& xi : data) h(xi, 0); // 0 lands in underflow of in{1, 3}
+
+    using V = variant<int, std::vector<int>>;
+    V xy[2];
+    xy[0] = data;
+    xy[1] = 0;
+    h2.fill(xy);
+
+    BOOST_TEST_EQ(h, h2);
+    BOOST_TEST_EQ(sum(h), 2);
+  }
+}
+
 int main() {
   std::mt19937 gen(1);
   std::normal_distribution<> id(0, 2);
@@ -358,6 +546,9 @@ int main() {
 
   run_tests<static_tag>(x, y, w);
   run_tests<dynamic_tag>(x, y, w);
+
+  run_tests_issue_960<static_tag>();
+  run_tests_issue_960<dynamic_tag>();
 
   return boost::report_errors();
 }
