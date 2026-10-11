@@ -8,7 +8,6 @@
 #define BOOST_HISTOGRAM_ALGORITHM_REDUCE_HPP
 
 #include <algorithm>
-#include <boost/config/workaround.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/make_default.hpp>
@@ -370,11 +369,6 @@ inline reduce_command pick(std::vector<axis::index_type> indices,
   return pick(reduce_command::unset, std::move(indices), mode);
 }
 
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(push)
-#pragma warning(disable : 4702) // unreachable code in the non-pickable static_if branch
-#endif
-
 /** Shrink, crop, slice, pick, and/or rebin axes of a histogram.
 
   Returns a new reduced histogram and leaves the original histogram untouched.
@@ -419,18 +413,18 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
             if (o.crop) o.use_overflow_bin = false;
             return detail::static_if_c<axis::traits::is_pickable<A>::value>(
                 [&o](const auto& a_in) {
-                  // unpicked bins and the old overflow bin map to o.end.index,
-                  // the overflow bin of the new axis
-                  o.end.index = static_cast<index_type>(o.indices.size());
-                  o.lut.assign(a_in.size() + 1, o.end.index);
-                  for (index_type k = 0; k < o.end.index; ++k) o.lut[o.indices[k]] = k;
+                  // lut is indexed by old index + 1 to cover the flow bins; bins
+                  // which are not picked map to the overflow bin of the new axis
+                  o.reduced_end = static_cast<index_type>(o.indices.size());
+                  o.lut.assign(a_in.size() + 2, o.reduced_end);
+                  for (index_type k = 0; k < o.reduced_end; ++k)
+                    o.lut[o.indices[k] + 1] = k;
                   return std::decay_t<decltype(a_in)>(
                       a_in, o.indices.data(), o.indices.data() + o.indices.size());
                 },
-                [iaxis](const auto& a_in) {
-                  return BOOST_THROW_EXCEPTION(std::invalid_argument(
-                             "axis " + std::to_string(iaxis) + " is not pickable")),
-                         a_in;
+                [iaxis](const auto& a_in) -> std::decay_t<decltype(a_in)> {
+                  BOOST_THROW_EXCEPTION(std::invalid_argument(
+                      "axis " + std::to_string(iaxis) + " is not pickable"));
                 },
                 a_in);
           }
@@ -499,25 +493,20 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
 
     for (auto j : x.indices()) {
       if (o->range == reduce_command::range_t::indices_list) {
-        // pick: unpicked bins and flow bins map to o->end.index, the overflow
-        // bin of the new axis
-        *i = j < 0 ? o->end.index : o->lut[j];
-        if (*i == o->end.index && !o->use_overflow_bin) skip = true;
+        *i = o->lut[j + 1];
       } else {
         *i = (j - o->begin.index);
         if (o->is_ordered && *i <= -1) {
           *i = -1;
           if (!o->use_underflow_bin) skip = true;
-        } else {
-          if (*i >= 0)
-            *i /= static_cast<index_type>(o->merge);
-          else
-            *i = o->reduced_end;
-          if (*i >= o->reduced_end) {
-            *i = o->reduced_end;
-            if (!o->use_overflow_bin) skip = true;
-          }
-        }
+        } else if (*i >= 0)
+          *i /= static_cast<index_type>(o->merge);
+        else
+          *i = o->reduced_end;
+      }
+      if (*i >= o->reduced_end) {
+        *i = o->reduced_end;
+        if (!o->use_overflow_bin) skip = true;
       }
 
       ++i;
@@ -529,10 +518,6 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
 
   return result;
 }
-
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(pop)
-#endif
 
 /** Shrink, crop, slice, pick, and/or rebin axes of a histogram.
 
