@@ -72,8 +72,8 @@ public:
     with the algorithms of the standard library, the accessor is implicitly convertible to
     a cell value. Assignments and comparisons are passed through to the cell. An accessor
     is coupled to its parent indexed_range::iterator. Moving the parent iterator
-    forward also updates the linked accessor. Accessors are not copyable. They cannot be
-    stored in containers, but indexed_range::iterator can be stored.
+    forward also updates the linked accessor. Accessors are movable but not copyable.
+    They cannot be stored in containers, but indexed_range::iterator can be stored.
   */
   class BOOST_ATTRIBUTE_NODISCARD accessor : detail::mirrored<accessor, void> {
   public:
@@ -217,6 +217,9 @@ public:
     }
 
     operator value_type() const noexcept { return get(); }
+
+    // libc++ 21 std::generate binds the dereferenced iterator to a by-value parameter
+    accessor(accessor&&) = default;
 
   private:
     accessor(iterator& i) noexcept : iter_(i) {}
