@@ -76,18 +76,20 @@ struct index_visitor {
 
   template <class T>
   void operator()(const T& iterable_or_value) const {
-    dispatch_on_value_or_iterable(mp11::mp_bool<(std::is_convertible<T, value_type>::value ||
-                          !is_iterable<T>::value)>{},
-           iterable_or_value);
+    dispatch_on_value_or_iterable(
+        mp11::mp_bool<(std::is_convertible<T, value_type>::value ||
+                       !is_iterable<T>::value)>{},
+        iterable_or_value);
   }
 
   template <class T>
   void dispatch_on_value_or_iterable(std::false_type, const T& iterable) const {
     // T is iterable; fill N values
     const auto* tp = dtl::data(iterable) + start_;
-    for (auto it = begin_; it != begin_ + size_; ++it) linearize_element(IsGrowing{}, it, *tp++);
-  }  
-  
+    for (auto it = begin_; it != begin_ + size_; ++it)
+      linearize_element(IsGrowing{}, it, *tp++);
+  }
+
   template <class T>
   void linearize_element(std::true_type, pointer it, const T& x) const {
     // must use this code for all axes if one of them is growing
@@ -154,7 +156,6 @@ struct index_visitor {
     // no axis is growing
     linearize(idx, stride_, axis_, try_cast<value_type, std::invalid_argument>(value));
   }
-
 };
 
 template <class Index, class S, class Axes, class T>
