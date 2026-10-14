@@ -101,6 +101,23 @@ int main() {
     BOOST_TEST_EQ(str(a), "integer(-1, 2, options=underflow | overflow)");
   }
 
+  // axis::integer with unsigned type, x - start must not wrap around
+  {
+    axis::integer<unsigned> a{1, 4};
+    BOOST_TEST_EQ(a.index(0), -1);
+    BOOST_TEST_EQ(a.index(1), 0);
+    BOOST_TEST_EQ(a.index(2), 1);
+    BOOST_TEST_EQ(a.index(3), 2);
+    BOOST_TEST_EQ(a.index(4), 3);
+    BOOST_TEST_EQ(a.index(5), 3);
+
+    axis::integer<unsigned, axis::null_type, axis::option::circular_t> b{1, 4};
+    BOOST_TEST_EQ(b.index(0), 2);
+    BOOST_TEST_EQ(b.index(1), 0);
+    BOOST_TEST_EQ(b.index(3), 2);
+    BOOST_TEST_EQ(b.index(4), 0);
+  }
+
   // axis::integer int,circular
   {
     axis::integer<int, axis::null_type, axis::option::circular_t> a(-1, 1);
