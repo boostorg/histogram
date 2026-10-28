@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_ALGORITHM_REDUCE_HPP
 #define BOOST_HISTOGRAM_ALGORITHM_REDUCE_HPP
 
+#include <algorithm>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/make_default.hpp>
@@ -21,6 +22,8 @@
 #include <initializer_list>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -316,14 +319,65 @@ inline reduce_command slice_and_rebin(axis::index_type begin, axis::index_type e
   return slice_and_rebin(reduce_command::unset, begin, end, merge, mode);
 }
 
-/** Shrink, crop, slice, and/or rebin axes of a histogram.
+/** Pick command to be used in `reduce`.
+
+  Command is applied to axis with given index.
+
+  Picking selects an arbitrary subset of bins by index. The new axis consists of the
+  picked bins in the order in which the indices are given, which may differ from their
+  order in the original axis. In contrast to `slice`, the picked bins do not have to be
+  adjacent. Each index must be valid and may only appear once.
+
+  Picking only works on axes that are not ordered, like the category axis, since
+  removing an arbitrary subset of bins from an ordered axis would create gaps in the
+  axis range. The counts in bins that were not picked are added to the overflow bin,
+  if it is present. If it is not present, the counts are discarded. In crop mode, the
+  counts in unpicked bins and in the original overflow bin are always discarded.
+
+  @param iaxis which axis to operate on.
+  @param indices indices of the bins to keep, must be unique.
+  @param mode whether to behave like `shrink` or `crop` regarding removed bins.
+*/
+inline reduce_command pick(unsigned iaxis, std::vector<axis::index_type> indices,
+                           slice_mode mode = slice_mode::shrink) {
+  if (indices.empty())
+    BOOST_THROW_EXCEPTION(std::invalid_argument("at least one index required"));
+  for (auto it = indices.begin(); it != indices.end(); ++it)
+    if (std::find(indices.begin(), it, *it) != it)
+      BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
+  reduce_command r;
+  r.iaxis = iaxis;
+  r.range = reduce_command::range_t::indices_list;
+  r.indices = std::move(indices);
+  r.merge = 1;
+  r.crop = mode == slice_mode::crop;
+  return r;
+}
+
+/** Pick command to be used in `reduce`.
+
+  Command is applied to corresponding axis in order of reduce arguments.
+
+  Picking selects an arbitrary subset of bins by index, see
+  pick(unsigned, std::vector<axis::index_type>, slice_mode) for details.
+
+  @param indices indices of the bins to keep, must be unique.
+  @param mode whether to behave like `shrink` or `crop` regarding removed bins.
+*/
+inline reduce_command pick(std::vector<axis::index_type> indices,
+                           slice_mode mode = slice_mode::shrink) {
+  return pick(reduce_command::unset, std::move(indices), mode);
+}
+
+/** Shrink, crop, slice, pick, and/or rebin axes of a histogram.
 
   Returns a new reduced histogram and leaves the original histogram untouched.
 
   The commands `rebin` and `shrink` or `slice` for the same axis are
   automatically combined, this is not an error. Passing a `shrink` and a `slice`
   command for the same axis or two `rebin` commands triggers an `invalid_argument`
-  exception. Trying to reducing a non-reducible axis triggers an `invalid_argument`
+  exception. The `pick` command cannot be combined with any other command for the
+  same axis. Trying to reducing a non-reducible axis triggers an `invalid_argument`
   exception. Histograms with  non-reducible axes can still be reduced along the
   other axes that are reducible.
 
@@ -331,8 +385,8 @@ inline reduce_command slice_and_rebin(axis::index_type begin, axis::index_type e
 
   @param hist original histogram.
   @param options iterable sequence of reduce commands: `shrink`, `slice`, `rebin`,
-  `shrink_and_rebin`, or `slice_and_rebin`. The element type of the iterable should be
-  `reduce_command`.
+  `pick`, `shrink_and_rebin`, or `slice_and_rebin`. The element type of the iterable
+  should be `reduce_command`.
 */
 template <class Histogram, class Iterable, class = detail::requires_iterable<Iterable>>
 Histogram reduce(const Histogram& hist, const Iterable& options) {
@@ -351,6 +405,29 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
         if (o.merge > 0) { // option is set?
           o.use_underflow_bin = AO::test(axis::option::underflow);
           o.use_overflow_bin = AO::test(axis::option::overflow);
+          if (o.range == reduce_command::range_t::indices_list) {
+            for (const auto idx : o.indices)
+              if (idx < 0 || idx >= a_in.size())
+                BOOST_THROW_EXCEPTION(std::invalid_argument("index out of range"));
+            // crop discards counts of unpicked bins instead of moving them to overflow
+            if (o.crop) o.use_overflow_bin = false;
+            return detail::static_if_c<axis::traits::is_pickable<A>::value>(
+                [&o](const auto& a_in) {
+                  // lut is indexed by old index + 1 to cover the flow bins; bins
+                  // which are not picked map to the overflow bin of the new axis
+                  o.reduced_end = static_cast<index_type>(o.indices.size());
+                  o.lut.assign(a_in.size() + 2, o.reduced_end);
+                  for (index_type k = 0; k < o.reduced_end; ++k)
+                    o.lut[o.indices[k] + 1] = k;
+                  return std::decay_t<decltype(a_in)>(
+                      a_in, o.indices.data(), o.indices.data() + o.indices.size());
+                },
+                [iaxis](const auto& a_in) -> std::decay_t<decltype(a_in)> {
+                  BOOST_THROW_EXCEPTION(std::invalid_argument(
+                      "axis " + std::to_string(iaxis) + " is not pickable"));
+                },
+                a_in);
+          }
           return detail::static_if_c<axis::traits::is_reducible<A>::value>(
               [&o](const auto& a_in) {
                 if (o.range == reduce_command::range_t::none) {
@@ -415,19 +492,21 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
     bool skip = false;
 
     for (auto j : x.indices()) {
-      *i = (j - o->begin.index);
-      if (o->is_ordered && *i <= -1) {
-        *i = -1;
-        if (!o->use_underflow_bin) skip = true;
+      if (o->range == reduce_command::range_t::indices_list) {
+        *i = o->lut[j + 1];
       } else {
-        if (*i >= 0)
+        *i = (j - o->begin.index);
+        if (o->is_ordered && *i <= -1) {
+          *i = -1;
+          if (!o->use_underflow_bin) skip = true;
+        } else if (*i >= 0)
           *i /= static_cast<index_type>(o->merge);
         else
           *i = o->reduced_end;
-        if (*i >= o->reduced_end) {
-          *i = o->reduced_end;
-          if (!o->use_overflow_bin) skip = true;
-        }
+      }
+      if (*i >= o->reduced_end) {
+        *i = o->reduced_end;
+        if (!o->use_overflow_bin) skip = true;
       }
 
       ++i;
@@ -440,21 +519,22 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
   return result;
 }
 
-/** Shrink, slice, and/or rebin axes of a histogram.
+/** Shrink, crop, slice, pick, and/or rebin axes of a histogram.
 
   Returns a new reduced histogram and leaves the original histogram untouched.
 
   The commands `rebin` and `shrink` or `slice` for the same axis are
   automatically combined, this is not an error. Passing a `shrink` and a `slice`
   command for the same axis or two `rebin` commands triggers an invalid_argument
-  exception. It is safe to reduce histograms with some axis that are not reducible along
+  exception. The `pick` command cannot be combined with any other command for the
+  same axis. It is safe to reduce histograms with some axis that are not reducible along
   the other axes. Trying to reducing a non-reducible axis triggers an invalid_argument
   exception.
 
   An overload allows one to pass an iterable of reduce_command.
 
   @param hist original histogram.
-  @param opt first reduce command; one of `shrink`, `slice`, `rebin`,
+  @param opt first reduce command; one of `shrink`, `slice`, `rebin`, `pick`,
   `shrink_and_rebin`, or `slice_or_rebin`.
   @param opts more reduce commands.
 */
