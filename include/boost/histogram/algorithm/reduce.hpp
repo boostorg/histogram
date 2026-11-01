@@ -613,8 +613,11 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
     assert(out_stride == result.size());
   }
 
-  detail::reduce_fill(unsafe_access::storage(hist), 0, unsafe_access::storage(result), 0,
-                      lut, maps.data(), rank - 1);
+  if (rank == 0) // a scalar histogram has one cell and no axis to recurse over
+    unsafe_access::storage(result)[0] += unsafe_access::storage(hist)[0];
+  else
+    detail::reduce_fill(unsafe_access::storage(hist), 0, unsafe_access::storage(result),
+                        0, lut, maps.data(), rank - 1);
 
   return result;
 }

@@ -539,5 +539,15 @@ int main() {
   run_tests<static_tag>();
   run_tests<dynamic_tag>();
 
+  // zero-dimensional histogram
+  {
+    auto h = make_histogram(std::vector<axis::regular<>>());
+    BOOST_TEST_EQ(h.rank(), 0);
+    unsafe_access::storage(h)[0] = 3;
+    auto hr = reduce(h, std::vector<reduce_command>());
+    BOOST_TEST_EQ(hr.rank(), 0);
+    BOOST_TEST_EQ(unsafe_access::storage(hr)[0], 3);
+  }
+
   return boost::report_errors();
 }
