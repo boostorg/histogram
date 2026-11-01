@@ -411,14 +411,17 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
                 BOOST_THROW_EXCEPTION(std::invalid_argument("index out of range"));
             // crop discards counts of unpicked bins instead of moving them to overflow
             if (o.crop) o.use_overflow_bin = false;
-            return detail::static_if_c<axis::traits::is_pickable<A>::value>(
+            return detail::static_if_c<axis::traits::has_pick_constructor<A>::value>(
                 [&o](const auto& a_in) {
-                  // lut is indexed by old index + 1 to cover the flow bins; bins
-                  // which are not picked map to the overflow bin of the new axis
+                  static_assert(!axis::traits::is_ordered<A>::value,
+                                "pick requires an unordered axis");
+                  // lut maps old index to new index; unpicked bins and the
+                  // overflow bin map to the overflow bin of the new axis
                   o.reduced_end = static_cast<index_type>(o.indices.size());
-                  o.lut.assign(a_in.size() + 2, o.reduced_end);
+                  o.lut.assign(static_cast<std::size_t>(a_in.size()) + 1,
+                               o.reduced_end);
                   for (index_type k = 0; k < o.reduced_end; ++k)
-                    o.lut[o.indices[k] + 1] = k;
+                    o.lut[o.indices[k]] = k;
                   return std::decay_t<decltype(a_in)>(
                       a_in, o.indices.data(), o.indices.data() + o.indices.size());
                 },
@@ -493,7 +496,7 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
 
     for (auto j : x.indices()) {
       if (o->range == reduce_command::range_t::indices_list) {
-        *i = o->lut[j + 1];
+        *i = o->lut[j];
       } else {
         *i = (j - o->begin.index);
         if (o->is_ordered && *i <= -1) {
