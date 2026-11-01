@@ -71,8 +71,7 @@ int main() {
 
   // has_pick_constructor
   {
-    struct no_pick_constructor {
-    };
+    struct no_pick_constructor {};
     struct pick_constructor {
       pick_constructor(const pick_constructor&, const index_type*, const index_type*);
     };
