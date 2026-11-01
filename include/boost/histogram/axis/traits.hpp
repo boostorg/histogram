@@ -193,9 +193,9 @@ struct is_reducible;
  */
 template <class Axis>
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-using has_pick_constructor = std::is_constructible<Axis, const Axis&,
-                                                   const axis::index_type*,
-                                                   const axis::index_type*>;
+using has_pick_constructor =
+    std::is_constructible<Axis, const Axis&, const axis::index_type*,
+                          const axis::index_type*>;
 #else
 struct has_pick_constructor;
 #endif

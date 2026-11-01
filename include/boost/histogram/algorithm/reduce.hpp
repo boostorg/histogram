@@ -418,10 +418,8 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
                   // lut maps old index to new index; unpicked bins and the
                   // overflow bin map to the overflow bin of the new axis
                   o.reduced_end = static_cast<index_type>(o.indices.size());
-                  o.lut.assign(static_cast<std::size_t>(a_in.size()) + 1,
-                               o.reduced_end);
-                  for (index_type k = 0; k < o.reduced_end; ++k)
-                    o.lut[o.indices[k]] = k;
+                  o.lut.assign(static_cast<std::size_t>(a_in.size()) + 1, o.reduced_end);
+                  for (index_type k = 0; k < o.reduced_end; ++k) o.lut[o.indices[k]] = k;
                   return std::decay_t<decltype(a_in)>(
                       a_in, o.indices.data(), o.indices.data() + o.indices.size());
                 },
