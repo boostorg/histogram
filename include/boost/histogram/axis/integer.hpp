@@ -104,9 +104,12 @@ public:
 
   /// Return index for value argument.
   index_type index(value_type x) const noexcept {
+    // x - min_ wraps around for unsigned value_type if x < min_
+    const double z = std::is_unsigned<value_type>::value && x < min_
+                         ? -static_cast<double>(min_ - x)
+                         : static_cast<double>(x - min_);
     return index_impl(options_type::test(axis::option::circular),
-                      std::is_floating_point<value_type>{},
-                      static_cast<double>(x - min_));
+                      std::is_floating_point<value_type>{}, z);
   }
 
   /// Returns index and shift (if axis has grown) for the passed argument.
