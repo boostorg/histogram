@@ -48,7 +48,7 @@ void reduce_fill_inner(std::true_type, const In& in, std::size_t in_off, Out& ou
     while (q < extent && l[q] == o) ++q;
     if (o != invalid_index) {
       auto& dst = out[out_off + o];
-      if (q == p + 1) {
+      if (q == p + 1) { // faster for the common run of length 1
         dst += in[in_off + p];
       } else {
         auto acc = dst;
@@ -479,11 +479,7 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
                 [&o](const auto& a_in) {
                   static_assert(!axis::traits::is_ordered<A>::value,
                                 "pick requires an unordered axis");
-                  // lut maps old index to new index; unpicked bins and the
-                  // overflow bin map to the overflow bin of the new axis
                   o.reduced_end = static_cast<index_type>(o.indices.size());
-                  o.lut.assign(static_cast<std::size_t>(a_in.size()) + 1, o.reduced_end);
-                  for (index_type k = 0; k < o.reduced_end; ++k) o.lut[o.indices[k]] = k;
                   return std::decay_t<decltype(a_in)>(
                       a_in, o.indices.data(), o.indices.data() + o.indices.size());
                 },
@@ -576,18 +572,23 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
       const index_type u = AO::test(axis::option::underflow);
       const index_type ov = AO::test(axis::option::overflow);
       const auto& o = opts[iaxis];
-      const auto size = a_in.size();
       auto& m = maps[iaxis];
       m.begin = static_cast<std::size_t>(l - lut);
-      m.extent = static_cast<std::size_t>(size + u + ov);
+      m.extent = static_cast<std::size_t>(axis::traits::extent(a_in));
       m.stride = in_stride;
-      for (index_type j = -u; j < size + ov; ++j) {
-        index_type i;
-        bool skip = false;
-        if (o.range == reduce_command::range_t::indices_list) {
-          i = j < 0 ? o.reduced_end : o.lut[j];
-        } else {
-          i = (j - o.begin.index);
+      if (o.range == reduce_command::range_t::indices_list) {
+        // unpicked bins and flow bins go to the overflow bin of the new axis
+        std::fill(l, l + m.extent,
+                  o.use_overflow_bin
+                      ? static_cast<std::size_t>(o.reduced_end + u) * out_stride
+                      : detail::invalid_index);
+        for (index_type k = 0; k < o.reduced_end; ++k)
+          l[o.indices[k] + u] = static_cast<std::size_t>(k + u) * out_stride;
+        l += m.extent;
+      } else {
+        for (index_type j = -u; j < a_in.size() + ov; ++j) {
+          index_type i = (j - o.begin.index);
+          bool skip = false;
           if (o.is_ordered && i <= -1) {
             i = -1;
             if (!o.use_underflow_bin) skip = true;
@@ -595,13 +596,13 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
             i /= static_cast<index_type>(o.merge);
           else
             i = o.reduced_end;
+          if (i >= o.reduced_end) {
+            i = o.reduced_end;
+            if (!o.use_overflow_bin) skip = true;
+          }
+          *l++ =
+              skip ? detail::invalid_index : static_cast<std::size_t>(i + u) * out_stride;
         }
-        if (i >= o.reduced_end) {
-          i = o.reduced_end;
-          if (!o.use_overflow_bin) skip = true;
-        }
-        *l++ =
-            skip ? detail::invalid_index : static_cast<std::size_t>(i + u) * out_stride;
       }
       in_stride *= m.extent;
       out_stride *= static_cast<std::size_t>(o.reduced_end + u + ov);

@@ -83,16 +83,22 @@ static void ShrinkAndRebin(benchmark::State& state, Tag, boost::mp11::mp_int<Dim
   run_reduce(state, h, opts);
 }
 
-// mirrors the boost-histogram python benchmark: h[loc(a), loc(b), loc(c), :]
 template <class Tag>
-static void Pick(benchmark::State& state, Tag) {
-  const int n = static_cast<int>(state.range(0));
+auto make_category_histogram(Tag, int n) {
   std::vector<std::string> cats;
   for (int i = 0; i < n; ++i) cats.push_back(std::to_string(i));
   using C = axis::category<std::string>;
   auto h = make_histogram_with(make_storage(Tag{}), C(cats), C(cats), C(cats),
                                axis::regular<>(n, 0.0, 10.0 * n));
   for (auto&& v : unsafe_access::storage(h)) v = 1.0;
+  return h;
+}
+
+// mirrors the boost-histogram python benchmark: h[loc(a), loc(b), loc(c), :]
+template <class Tag>
+static void Pick(benchmark::State& state, Tag) {
+  const int n = static_cast<int>(state.range(0));
+  const auto h = make_category_histogram(Tag{}, n);
   std::vector<algorithm::reduce_command> opts;
   for (int i = 0; i < 3; ++i) opts.push_back(algorithm::pick(i, {13 % n}));
   run_reduce(state, h, opts);
@@ -101,12 +107,7 @@ static void Pick(benchmark::State& state, Tag) {
 template <class Tag>
 static void PickCrop(benchmark::State& state, Tag) {
   const int n = static_cast<int>(state.range(0));
-  std::vector<std::string> cats;
-  for (int i = 0; i < n; ++i) cats.push_back(std::to_string(i));
-  using C = axis::category<std::string>;
-  auto h = make_histogram_with(make_storage(Tag{}), C(cats), C(cats), C(cats),
-                               axis::regular<>(n, 0.0, 10.0 * n));
-  for (auto&& v : unsafe_access::storage(h)) v = 1.0;
+  const auto h = make_category_histogram(Tag{}, n);
   std::vector<algorithm::reduce_command> opts;
   for (int i = 0; i < 3; ++i)
     opts.push_back(algorithm::pick(i, {13 % n}, algorithm::slice_mode::crop));
@@ -116,12 +117,7 @@ static void PickCrop(benchmark::State& state, Tag) {
 template <class Tag>
 static void PickAndSlice(benchmark::State& state, Tag) {
   const int n = static_cast<int>(state.range(0));
-  std::vector<std::string> cats;
-  for (int i = 0; i < n; ++i) cats.push_back(std::to_string(i));
-  using C = axis::category<std::string>;
-  auto h = make_histogram_with(make_storage(Tag{}), C(cats), C(cats), C(cats),
-                               axis::regular<>(n, 0.0, 10.0 * n));
-  for (auto&& v : unsafe_access::storage(h)) v = 1.0;
+  const auto h = make_category_histogram(Tag{}, n);
   std::vector<algorithm::reduce_command> opts;
   opts.push_back(algorithm::slice(0, 3, 29 % n));
   for (int i = 1; i < 3; ++i) opts.push_back(algorithm::pick(i, {13 % n}));
