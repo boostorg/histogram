@@ -69,6 +69,26 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((traits::is_reducible<category<>>));
   }
 
+  // has_pick_constructor
+  {
+    struct no_pick_constructor {
+    };
+    struct pick_constructor {
+      pick_constructor(const pick_constructor&, const index_type*, const index_type*);
+    };
+
+    BOOST_TEST_TRAIT_TRUE((traits::has_pick_constructor<pick_constructor>));
+    BOOST_TEST_TRAIT_FALSE((traits::has_pick_constructor<no_pick_constructor>));
+
+    BOOST_TEST_TRAIT_FALSE((traits::has_pick_constructor<integer<>>));
+    BOOST_TEST_TRAIT_TRUE((traits::has_pick_constructor<category<>>));
+    // metadata constructible from a pointer must not have pick constructor
+    BOOST_TEST_TRAIT_FALSE(
+        (traits::has_pick_constructor<variable<double, std::vector<int>>>));
+    BOOST_TEST_TRAIT_FALSE(
+        (traits::has_pick_constructor<regular<double, boost::use_default, const int*>>));
+  }
+
   // get_options, options()
   {
     using A = integer<>;

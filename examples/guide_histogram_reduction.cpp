@@ -8,10 +8,12 @@
 
 #include <boost/histogram.hpp>
 #include <cassert>
+#include <string>
 
 int main() {
   using namespace boost::histogram;
   // import reduce commands into local namespace to save typing
+  using algorithm::pick;
   using algorithm::rebin;
   using algorithm::shrink;
   using algorithm::slice;
@@ -43,6 +45,22 @@ int main() {
 
   assert(h3.axis(0) == h.axis(0)); // unchanged
   assert(h3.axis(1) == axis::regular<>(2, 0.0, 2.0));
+
+  // pick selects an arbitrary subset of bins from an axis which is not ordered, like
+  // the category axis; unlike a slice, the picked bins do not have to be adjacent
+  auto h4 = make_histogram(axis::category<std::string>({"red", "green", "blue"}));
+
+  h4("red");
+  h4("green");
+  h4("blue");
+
+  // pick the bins for "blue" and "red", in that order
+  auto h5 = algorithm::reduce(h4, pick({2, 0}));
+
+  assert(h5.axis(0) == axis::category<std::string>({"blue", "red"}));
+  assert(h5.at(0) == 1 && h5.at(1) == 1);
+  // the count for "green" was moved to the overflow bin of the category axis
+  assert(h5.at(2) == 1);
 }
 
 //]

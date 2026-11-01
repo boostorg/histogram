@@ -44,6 +44,7 @@ boost_test(TYPE compile-fail SOURCES histogram_fail1.cpp)
 boost_test(TYPE compile-fail SOURCES histogram_fail2.cpp)
 boost_test(TYPE compile-fail SOURCES histogram_fail3.cpp)
 boost_test(TYPE compile-fail SOURCES histogram_fail4.cpp)
+boost_test(TYPE compile-fail SOURCES algorithm_reduce_pick_fail.cpp)
 
 set(BOOST_TEST_LINK_LIBRARIES Boost::histogram Boost::core)
 
@@ -56,7 +57,8 @@ boost_test(TYPE run SOURCES accumulators_weighted_mean_test.cpp)
 boost_test(TYPE run SOURCES accumulators_weighted_sum_test.cpp)
 boost_test(TYPE run SOURCES accumulators_collector_test.cpp)
 boost_test(TYPE run SOURCES algorithm_project_test.cpp)
-boost_test(TYPE run SOURCES algorithm_reduce_test.cpp)
+boost_test(TYPE run SOURCES algorithm_reduce_test.cpp
+  COMPILE_OPTIONS $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
 boost_test(TYPE run SOURCES algorithm_sum_test.cpp)
 boost_test(TYPE run SOURCES algorithm_empty_test.cpp)
 boost_test(TYPE run SOURCES axis_boolean_test.cpp)
