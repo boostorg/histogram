@@ -86,26 +86,39 @@ struct index_visitor {
   void dispatch_on_value_or_iterable(std::false_type, const T& iterable) const {
     // T is iterable; fill N values
     const auto* tp = dtl::data(iterable) + start_;
-    for (auto it = begin_; it != begin_ + size_; ++it)
-      linearize_element(IsGrowing{}, it, *tp++);
+    // When this runs through a variant visit, the members are read through `this`
+    // and the loop is not vectorized. Locals and a constant stride for the first
+    // axis keep the loop simple enough for the vectorizer.
+    const pointer begin = begin_;
+    const pointer end = begin_ + size_;
+    if (stride_ == 1) {
+      for (auto it = begin; it != end; ++it)
+        linearize_element(IsGrowing{}, it, std::size_t{1}, *tp++);
+    } else {
+      const std::size_t stride = stride_;
+      for (auto it = begin; it != end; ++it)
+        linearize_element(IsGrowing{}, it, stride, *tp++);
+    }
   }
 
   template <class T>
-  void linearize_element(std::true_type, pointer it, const T& x) const {
+  void linearize_element(std::true_type, pointer it, const std::size_t stride,
+                         const T& x) const {
     // must use this code for all axes if one of them is growing
     axis::index_type shift;
-    linearize_growth(*it, shift, stride_, axis_,
+    linearize_growth(*it, shift, stride, axis_,
                      try_cast<value_type, std::invalid_argument>(x));
     if (shift > 0) { // shift previous indices, because axis zero-point has changed
-      while (it != begin_) *--it += static_cast<std::size_t>(shift) * stride_;
+      while (it != begin_) *--it += static_cast<std::size_t>(shift) * stride;
       *shift_ += shift;
     }
   }
 
   template <class T>
-  void linearize_element(std::false_type, pointer it, const T& x) const {
+  void linearize_element(std::false_type, pointer it, const std::size_t stride,
+                         const T& x) const {
     // no axis is growing
-    linearize(*it, stride_, axis_, try_cast<value_type, std::invalid_argument>(x));
+    linearize(*it, stride, axis_, try_cast<value_type, std::invalid_argument>(x));
   }
 
   template <class T>
