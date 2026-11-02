@@ -36,37 +36,6 @@ struct reduce_axis_map {
   std::size_t stride; // input stride of this axis
 };
 
-// Innermost axis. Consecutive input cells which map to the same output cell are
-// summed in a local accumulator; this breaks the store-to-load chain on the output cell.
-template <class In, class Out>
-void reduce_fill_inner(std::true_type, const In& in, std::size_t in_off, Out& out,
-                       std::size_t out_off, const std::size_t* l, std::size_t extent) {
-  std::size_t p = 0;
-  while (p < extent) {
-    const auto o = l[p];
-    std::size_t q = p + 1;
-    while (q < extent && l[q] == o) ++q;
-    if (o != invalid_index) {
-      auto& dst = out[out_off + o];
-      if (q == p + 1) { // faster for the common run of length 1
-        dst += in[in_off + p];
-      } else {
-        auto acc = dst;
-        for (; p < q; ++p) acc += in[in_off + p];
-        dst = acc;
-      }
-    }
-    p = q;
-  }
-}
-
-template <class In, class Out>
-void reduce_fill_inner(std::false_type, const In& in, std::size_t in_off, Out& out,
-                       std::size_t out_off, const std::size_t* l, std::size_t extent) {
-  for (std::size_t p = 0; p < extent; ++p)
-    if (l[p] != invalid_index) out[out_off + l[p]] += in[in_off + p];
-}
-
 // Accumulate input cells into output cells. The lookup table maps each stored input
 // position to an output offset; invalid_index skips the input cell and, for an outer
 // axis, the whole block of cells below it.
@@ -78,10 +47,34 @@ void reduce_fill(const In& in, std::size_t in_off, Out& out, std::size_t out_off
   if (iaxis == 0) {
     // local accumulation needs a true reference to an arithmetic cell
     using ref_t = decltype(out[std::size_t{}]);
-    using fast_t =
-        std::integral_constant<bool, std::is_lvalue_reference<ref_t>::value &&
-                                         std::is_arithmetic<std::decay_t<ref_t>>::value>;
-    reduce_fill_inner(fast_t{}, in, in_off, out, out_off, l, m.extent);
+    static_if_c<std::is_lvalue_reference<ref_t>::value &&
+                std::is_arithmetic<std::decay_t<ref_t>>::value>(
+        [&](auto& res) {
+          // sum runs of input cells with the same output cell in a local accumulator;
+          // this breaks the store-to-load chain on the output cell
+          std::size_t p = 0;
+          while (p < m.extent) {
+            const auto o = l[p];
+            std::size_t q = p + 1;
+            while (q < m.extent && l[q] == o) ++q;
+            if (o != invalid_index) {
+              auto& dst = res[out_off + o];
+              if (q == p + 1) { // faster for the common run of length 1
+                dst += in[in_off + p];
+              } else {
+                auto acc = dst;
+                for (; p < q; ++p) acc += in[in_off + p];
+                dst = acc;
+              }
+            }
+            p = q;
+          }
+        },
+        [&](auto& res) {
+          for (std::size_t p = 0; p < m.extent; ++p)
+            if (l[p] != invalid_index) res[out_off + l[p]] += in[in_off + p];
+        },
+        out);
   } else {
     for (std::size_t p = 0; p < m.extent; ++p)
       if (l[p] != invalid_index)
