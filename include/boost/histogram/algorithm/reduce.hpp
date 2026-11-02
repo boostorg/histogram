@@ -552,17 +552,10 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
   detail::for_each_axis(old_axes, [&lut_size](const auto& a) {
     lut_size += static_cast<std::size_t>(axis::traits::extent(a));
   });
-  // small tables live on the stack to keep reduce of small histograms cheap
-  std::size_t lut_stack[256];
-  std::vector<std::size_t> lut_heap;
-  std::size_t* lut = lut_stack;
-  if (lut_size > 256) {
-    lut_heap.resize(lut_size);
-    lut = lut_heap.data();
-  }
+  std::vector<std::size_t> lut(lut_size);
   auto maps = detail::make_stack_buffer<detail::reduce_axis_map>(old_axes);
   {
-    std::size_t* l = lut;
+    std::size_t* l = lut.data();
     std::size_t in_stride = 1;
     std::size_t out_stride = 1;
     unsigned iaxis = 0;
@@ -573,7 +566,7 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
       const index_type ov = AO::test(axis::option::overflow);
       const auto& o = opts[iaxis];
       auto& m = maps[iaxis];
-      m.begin = static_cast<std::size_t>(l - lut);
+      m.begin = static_cast<std::size_t>(l - lut.data());
       m.extent = static_cast<std::size_t>(axis::traits::extent(a_in));
       m.stride = in_stride;
       if (o.range == reduce_command::range_t::indices_list) {
@@ -608,7 +601,7 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
       out_stride *= static_cast<std::size_t>(o.reduced_end + u + ov);
       ++iaxis;
     });
-    assert(static_cast<std::size_t>(l - lut) == lut_size);
+    assert(static_cast<std::size_t>(l - lut.data()) == lut_size);
     assert(in_stride == hist.size());
     assert(out_stride == result.size());
   }
@@ -617,7 +610,7 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
     unsafe_access::storage(result)[0] += unsafe_access::storage(hist)[0];
   else
     detail::reduce_fill(unsafe_access::storage(hist), 0, unsafe_access::storage(result),
-                        0, lut, maps.data(), rank - 1);
+                        0, lut.data(), maps.data(), rank - 1);
 
   return result;
 }
