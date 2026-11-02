@@ -10,11 +10,12 @@
 #include <algorithm>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
+#include <boost/histogram/detail/cell_map.hpp>
 #include <boost/histogram/detail/make_default.hpp>
+#include <boost/histogram/detail/optional_index.hpp>
 #include <boost/histogram/detail/reduce_command.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/histogram/indexed.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/throw_exception.hpp>
 #include <cassert>
@@ -22,6 +23,7 @@
 #include <initializer_list>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -415,13 +417,7 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
                 [&o](const auto& a_in) {
                   static_assert(!axis::traits::is_ordered<A>::value,
                                 "pick requires an unordered axis");
-                  // lut maps old index to new index; unpicked bins and the
-                  // overflow bin map to the overflow bin of the new axis
                   o.reduced_end = static_cast<index_type>(o.indices.size());
-                  o.lut.assign(static_cast<std::size_t>(a_in.size()) + 1,
-                               o.reduced_end);
-                  for (index_type k = 0; k < o.reduced_end; ++k)
-                    o.lut[o.indices[k]] = k;
                   return std::decay_t<decltype(a_in)>(
                       a_in, o.indices.data(), o.indices.data() + o.indices.size());
                 },
@@ -488,36 +484,91 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
   auto result =
       Histogram(std::move(axes), detail::make_default(unsafe_access::storage(hist)));
 
-  auto idx = detail::make_stack_buffer<index_type>(unsafe_access::axes(result));
-  for (auto&& x : indexed(hist, coverage::all)) {
-    auto i = idx.begin();
-    auto o = opts.begin();
-    bool skip = false;
-
-    for (auto j : x.indices()) {
-      if (o->range == reduce_command::range_t::indices_list) {
-        *i = o->lut[j];
+  // maps each input cell to its output cell
+  detail::cell_map<std::decay_t<decltype(old_axes)>> map(old_axes);
+  {
+    std::size_t out_stride = 1;
+    unsigned iaxis = 0;
+    detail::for_each_axis(old_axes, [&](const auto& a_in) {
+      using A = std::decay_t<decltype(a_in)>;
+      using AO = axis::traits::get_options<A>;
+      const index_type u = AO::test(axis::option::underflow);
+      const index_type ov = AO::test(axis::option::overflow);
+      const auto& o = opts[iaxis];
+      const auto extent = static_cast<std::size_t>(axis::traits::extent(a_in));
+      std::size_t* l = map.add_axis(extent);
+      if (o.range == reduce_command::range_t::indices_list) {
+        // unpicked bins and flow bins go to the overflow bin of the new axis
+        std::fill(l, l + extent,
+                  o.use_overflow_bin
+                      ? static_cast<std::size_t>(o.reduced_end + u) * out_stride
+                      : detail::invalid_index);
+        for (index_type k = 0; k < o.reduced_end; ++k)
+          l[o.indices[k] + u] = static_cast<std::size_t>(k + u) * out_stride;
       } else {
-        *i = (j - o->begin.index);
-        if (o->is_ordered && *i <= -1) {
-          *i = -1;
-          if (!o->use_underflow_bin) skip = true;
-        } else if (*i >= 0)
-          *i /= static_cast<index_type>(o->merge);
-        else
-          *i = o->reduced_end;
+        for (index_type j = -u; j < a_in.size() + ov; ++j) {
+          index_type i = (j - o.begin.index);
+          bool skip = false;
+          if (o.is_ordered && i <= -1) {
+            i = -1;
+            if (!o.use_underflow_bin) skip = true;
+          } else if (i >= 0)
+            i /= static_cast<index_type>(o.merge);
+          else
+            i = o.reduced_end;
+          if (i >= o.reduced_end) {
+            i = o.reduced_end;
+            if (!o.use_overflow_bin) skip = true;
+          }
+          *l++ =
+              skip ? detail::invalid_index : static_cast<std::size_t>(i + u) * out_stride;
+        }
       }
-      if (*i >= o->reduced_end) {
-        *i = o->reduced_end;
-        if (!o->use_overflow_bin) skip = true;
-      }
-
-      ++i;
-      ++o;
-    }
-
-    if (!skip) result.at(idx) += *x;
+      out_stride *= static_cast<std::size_t>(o.reduced_end + u + ov);
+      ++iaxis;
+    });
+    assert(map.input_size() == hist.size());
+    assert(out_stride == result.size());
   }
+
+  const auto& in = unsafe_access::storage(hist);
+  auto& out = unsafe_access::storage(result);
+  // local accumulation needs a true reference to an arithmetic cell
+  using ref_t = decltype(out[std::size_t{}]);
+  detail::static_if_c<std::is_lvalue_reference<ref_t>::value &&
+                      std::is_arithmetic<std::decay_t<ref_t>>::value>(
+      [&map, &in](auto& res) {
+        map.for_each_line([&](std::size_t in_off, std::size_t out_off,
+                              const std::size_t* l, std::size_t n) {
+          // sum runs of input cells with the same output cell in a local accumulator;
+          // this breaks the store-to-load chain on the output cell
+          std::size_t p = 0;
+          while (p < n) {
+            const auto o = l[p];
+            std::size_t q = p + 1;
+            while (q < n && l[q] == o) ++q;
+            if (o != detail::invalid_index) {
+              auto& dst = res[out_off + o];
+              if (q == p + 1) { // faster for the common run of length 1
+                dst += in[in_off + p];
+              } else {
+                auto acc = dst;
+                for (; p < q; ++p) acc += in[in_off + p];
+                dst = acc;
+              }
+            }
+            p = q;
+          }
+        });
+      },
+      [&map, &in](auto& res) {
+        map.for_each_line([&](std::size_t in_off, std::size_t out_off,
+                              const std::size_t* l, std::size_t n) {
+          for (std::size_t p = 0; p < n; ++p)
+            if (l[p] != detail::invalid_index) res[out_off + l[p]] += in[in_off + p];
+        });
+      },
+      out);
 
   return result;
 }

@@ -13,6 +13,7 @@
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/argument_traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
+#include <boost/histogram/detail/cell_map.hpp>
 #include <boost/histogram/detail/linearize.hpp>
 #include <boost/histogram/detail/make_default.hpp>
 #include <boost/histogram/detail/optional_index.hpp>
@@ -52,83 +53,51 @@ struct sample_args_passed_vs_expected<std::tuple<Passed...>, std::tuple<Expected
 template <class A>
 struct storage_grower {
   const A& axes_;
-  struct {
-    axis::index_type idx, old_extent;
-    std::size_t new_stride;
-  } data_[buffer_size<A>::value];
-  std::size_t new_size_;
+  decltype(make_stack_buffer<axis::index_type>(std::declval<const A&>())) old_extents_;
 
-  storage_grower(const A& axes) noexcept : axes_(axes) {}
+  storage_grower(const A& axes) noexcept
+      : axes_(axes), old_extents_(make_stack_buffer<axis::index_type>(axes)) {}
 
   void from_shifts(const axis::index_type* shifts) noexcept {
-    auto dit = data_;
-    std::size_t s = 1;
+    auto eit = old_extents_.begin();
     for_each_axis(axes_, [&](const auto& a) {
-      const auto n = axis::traits::extent(a);
-      *dit++ = {0, n - std::abs(*shifts++), s};
-      s *= n;
+      *eit++ = axis::traits::extent(a) - std::abs(*shifts++);
     });
-    new_size_ = s;
   }
 
   // must be extents before any shifts were applied
   void from_extents(const axis::index_type* old_extents) noexcept {
-    auto dit = data_;
-    std::size_t s = 1;
-    for_each_axis(axes_, [&](const auto& a) {
-      const auto n = axis::traits::extent(a);
-      *dit++ = {0, *old_extents++, s};
-      s *= n;
-    });
-    new_size_ = s;
+    std::copy(old_extents, old_extents + old_extents_.size(), old_extents_.begin());
   }
 
   template <class S>
   void apply(S& storage, const axis::index_type* shifts) {
+    cell_map<A> map(axes_);
+    std::size_t out_stride = 1;
+    auto eit = old_extents_.begin();
+    for_each_axis(axes_, [&](const auto& a) {
+      using opt = axis::traits::get_options<std::decay_t<decltype(a)>>;
+      const auto n = axis::traits::extent(a);
+      const auto old_extent = *eit++;
+      // normal bins move by the positive shift, if any
+      const auto shift = (std::max)(*shifts++, 0);
+      std::size_t* l = map.add_axis(static_cast<std::size_t>(old_extent));
+      for (axis::index_type i = 0; i < old_extent; ++i)
+        l[i] = static_cast<std::size_t>(i + shift) * out_stride;
+      if (opt::test(axis::option::overflow))
+        l[old_extent - 1] = static_cast<std::size_t>(n - 1) * out_stride;
+      if (opt::test(axis::option::underflow)) l[0] = 0;
+      out_stride *= static_cast<std::size_t>(n);
+    });
+    assert(map.input_size() == storage.size());
+
     auto new_storage = make_default(storage);
-    new_storage.reset(new_size_);
-    const auto dlast = data_ + axes_rank(axes_) - 1;
-    for (auto&& x : storage) {
-      auto ns = new_storage.begin();
-      auto sit = shifts;
-      auto dit = data_;
-      for_each_axis(axes_, [&](const auto& a) {
-        using opt = axis::traits::get_options<std::decay_t<decltype(a)>>;
-        if (opt::test(axis::option::underflow)) {
-          if (dit->idx == 0) {
-            // axis has underflow and we are in the underflow bin:
-            // keep storage pointer unchanged
-            ++dit;
-            ++sit;
-            return;
-          }
-        }
-        if (opt::test(axis::option::overflow)) {
-          if (dit->idx == dit->old_extent - 1) {
-            // axis has overflow and we are in the overflow bin:
-            // move storage pointer to corresponding overflow bin position
-            ns += (axis::traits::extent(a) - 1) * dit->new_stride;
-            ++dit;
-            ++sit;
-            return;
-          }
-        }
-        // we are in a normal bin:
-        // move storage pointer to index position; apply positive shifts if any
-        ns += (dit->idx + (*sit >= 0 ? *sit : 0)) * dit->new_stride;
-        ++dit;
-        ++sit;
-      });
-      // assign old value to new location
-      *ns = x;
-      // advance multi-dimensional index
-      dit = data_;
-      ++dit->idx;
-      while (dit != dlast && dit->idx == dit->old_extent) {
-        dit->idx = 0;
-        ++(++dit)->idx;
-      }
-    }
+    new_storage.reset(out_stride);
+    map.for_each_line([&](std::size_t in_off, std::size_t out_off, const std::size_t* l,
+                          std::size_t n) {
+      for (std::size_t p = 0; p < n; ++p)
+        new_storage[out_off + l[p]] = storage[in_off + p];
+    });
     storage = std::move(new_storage);
   }
 };
