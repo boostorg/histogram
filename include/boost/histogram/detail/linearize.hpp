@@ -42,11 +42,11 @@ std::size_t linearize(Opts, optional_index& out, const std::size_t stride,
   constexpr bool o = Opts::test(axis::option::overflow);
   assert(idx >= -1);
   assert(idx < size + 1);
-  const bool is_valid = (u || idx >= 0) && (o || idx < size);
-  if (is_valid)
-    out += idx * stride;
-  else
-    out = invalid_index;
+  // Branch-free, because data that is partly out of range mispredicts the checks.
+  // A mask of all ones is also invalid_index, so an invalid input stays invalid.
+  const bool valid = (u | (idx >= 0)) & (o | (idx < size)) & is_valid(out);
+  const auto mask = static_cast<std::size_t>(0) - static_cast<std::size_t>(!valid);
+  out.value = (out.value + static_cast<std::size_t>(idx) * stride) | mask;
   return size + u + o;
 }
 

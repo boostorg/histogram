@@ -322,7 +322,7 @@ public:
       index_type i = static_cast<index_type>(zc * size());
       i = below ? -1 : i;
       // upper edge of last bin is inclusive if overflow bin is not present
-      if (!options_type::test(option::overflow)) i = z == 1 ? size() - 1 : i;
+      if (!options_type::test(option::overflow)) i -= static_cast<index_type>(z == 1);
       return i; // size() if x is NaN
     }
     return size();
