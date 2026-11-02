@@ -11,10 +11,10 @@
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/make_default.hpp>
+#include <boost/histogram/detail/optional_index.hpp>
 #include <boost/histogram/detail/reduce_command.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/histogram/indexed.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/throw_exception.hpp>
 #include <cassert>
@@ -22,11 +22,68 @@
 #include <initializer_list>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace boost {
 namespace histogram {
+namespace detail {
+
+struct reduce_axis_map {
+  std::size_t begin;  // first entry of this axis in the lookup table
+  std::size_t extent; // number of stored input bins, including flow bins
+  std::size_t stride; // input stride of this axis
+};
+
+// Accumulate input cells into output cells. The lookup table maps each stored input
+// position to an output offset; invalid_index skips the input cell and, for an outer
+// axis, the whole block of cells below it.
+template <class In, class Out>
+void reduce_fill(const In& in, std::size_t in_off, Out& out, std::size_t out_off,
+                 const std::size_t* lut, const reduce_axis_map* maps, unsigned iaxis) {
+  const auto& m = maps[iaxis];
+  const std::size_t* const l = lut + m.begin;
+  if (iaxis == 0) {
+    // local accumulation needs a true reference to an arithmetic cell
+    using ref_t = decltype(out[std::size_t{}]);
+    static_if_c<std::is_lvalue_reference<ref_t>::value &&
+                std::is_arithmetic<std::decay_t<ref_t>>::value>(
+        [&](auto& res) {
+          // sum runs of input cells with the same output cell in a local accumulator;
+          // this breaks the store-to-load chain on the output cell
+          std::size_t p = 0;
+          while (p < m.extent) {
+            const auto o = l[p];
+            std::size_t q = p + 1;
+            while (q < m.extent && l[q] == o) ++q;
+            if (o != invalid_index) {
+              auto& dst = res[out_off + o];
+              if (q == p + 1) { // faster for the common run of length 1
+                dst += in[in_off + p];
+              } else {
+                auto acc = dst;
+                for (; p < q; ++p) acc += in[in_off + p];
+                dst = acc;
+              }
+            }
+            p = q;
+          }
+        },
+        [&](auto& res) {
+          for (std::size_t p = 0; p < m.extent; ++p)
+            if (l[p] != invalid_index) res[out_off + l[p]] += in[in_off + p];
+        },
+        out);
+  } else {
+    for (std::size_t p = 0; p < m.extent; ++p)
+      if (l[p] != invalid_index)
+        reduce_fill(in, in_off + p * m.stride, out, out_off + l[p], lut, maps, iaxis - 1);
+  }
+}
+
+} // namespace detail
+
 namespace algorithm {
 
 /** Holder for a reduce command.
@@ -415,13 +472,7 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
                 [&o](const auto& a_in) {
                   static_assert(!axis::traits::is_ordered<A>::value,
                                 "pick requires an unordered axis");
-                  // lut maps old index to new index; unpicked bins and the
-                  // overflow bin map to the overflow bin of the new axis
                   o.reduced_end = static_cast<index_type>(o.indices.size());
-                  o.lut.assign(static_cast<std::size_t>(a_in.size()) + 1,
-                               o.reduced_end);
-                  for (index_type k = 0; k < o.reduced_end; ++k)
-                    o.lut[o.indices[k]] = k;
                   return std::decay_t<decltype(a_in)>(
                       a_in, o.indices.data(), o.indices.data() + o.indices.size());
                 },
@@ -488,36 +539,71 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
   auto result =
       Histogram(std::move(axes), detail::make_default(unsafe_access::storage(hist)));
 
-  auto idx = detail::make_stack_buffer<index_type>(unsafe_access::axes(result));
-  for (auto&& x : indexed(hist, coverage::all)) {
-    auto i = idx.begin();
-    auto o = opts.begin();
-    bool skip = false;
-
-    for (auto j : x.indices()) {
-      if (o->range == reduce_command::range_t::indices_list) {
-        *i = o->lut[j];
+  // one table per axis maps each stored input position to an output offset
+  const auto rank = detail::axes_rank(old_axes);
+  std::size_t lut_size = 0;
+  detail::for_each_axis(old_axes, [&lut_size](const auto& a) {
+    lut_size += static_cast<std::size_t>(axis::traits::extent(a));
+  });
+  std::vector<std::size_t> lut(lut_size);
+  auto maps = detail::make_stack_buffer<detail::reduce_axis_map>(old_axes);
+  {
+    std::size_t* l = lut.data();
+    std::size_t in_stride = 1;
+    std::size_t out_stride = 1;
+    unsigned iaxis = 0;
+    detail::for_each_axis(old_axes, [&](const auto& a_in) {
+      using A = std::decay_t<decltype(a_in)>;
+      using AO = axis::traits::get_options<A>;
+      const index_type u = AO::test(axis::option::underflow);
+      const index_type ov = AO::test(axis::option::overflow);
+      const auto& o = opts[iaxis];
+      auto& m = maps[iaxis];
+      m.begin = static_cast<std::size_t>(l - lut.data());
+      m.extent = static_cast<std::size_t>(axis::traits::extent(a_in));
+      m.stride = in_stride;
+      if (o.range == reduce_command::range_t::indices_list) {
+        // unpicked bins and flow bins go to the overflow bin of the new axis
+        std::fill(l, l + m.extent,
+                  o.use_overflow_bin
+                      ? static_cast<std::size_t>(o.reduced_end + u) * out_stride
+                      : detail::invalid_index);
+        for (index_type k = 0; k < o.reduced_end; ++k)
+          l[o.indices[k] + u] = static_cast<std::size_t>(k + u) * out_stride;
+        l += m.extent;
       } else {
-        *i = (j - o->begin.index);
-        if (o->is_ordered && *i <= -1) {
-          *i = -1;
-          if (!o->use_underflow_bin) skip = true;
-        } else if (*i >= 0)
-          *i /= static_cast<index_type>(o->merge);
-        else
-          *i = o->reduced_end;
+        for (index_type j = -u; j < a_in.size() + ov; ++j) {
+          index_type i = (j - o.begin.index);
+          bool skip = false;
+          if (o.is_ordered && i <= -1) {
+            i = -1;
+            if (!o.use_underflow_bin) skip = true;
+          } else if (i >= 0)
+            i /= static_cast<index_type>(o.merge);
+          else
+            i = o.reduced_end;
+          if (i >= o.reduced_end) {
+            i = o.reduced_end;
+            if (!o.use_overflow_bin) skip = true;
+          }
+          *l++ =
+              skip ? detail::invalid_index : static_cast<std::size_t>(i + u) * out_stride;
+        }
       }
-      if (*i >= o->reduced_end) {
-        *i = o->reduced_end;
-        if (!o->use_overflow_bin) skip = true;
-      }
-
-      ++i;
-      ++o;
-    }
-
-    if (!skip) result.at(idx) += *x;
+      in_stride *= m.extent;
+      out_stride *= static_cast<std::size_t>(o.reduced_end + u + ov);
+      ++iaxis;
+    });
+    assert(static_cast<std::size_t>(l - lut.data()) == lut_size);
+    assert(in_stride == hist.size());
+    assert(out_stride == result.size());
   }
+
+  if (rank == 0) // a scalar histogram has one cell and no axis to recurse over
+    unsafe_access::storage(result)[0] += unsafe_access::storage(hist)[0];
+  else
+    detail::reduce_fill(unsafe_access::storage(hist), 0, unsafe_access::storage(result),
+                        0, lut.data(), maps.data(), rank - 1);
 
   return result;
 }

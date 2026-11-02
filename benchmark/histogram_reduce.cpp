@@ -6,6 +6,7 @@
 
 #include <benchmark/benchmark.h>
 #include <boost/histogram/algorithm/reduce.hpp>
+#include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
@@ -82,6 +83,47 @@ static void ShrinkAndRebin(benchmark::State& state, Tag, boost::mp11::mp_int<Dim
   run_reduce(state, h, opts);
 }
 
+template <class Tag>
+auto make_category_histogram(Tag, int n) {
+  std::vector<std::string> cats;
+  for (int i = 0; i < n; ++i) cats.push_back(std::to_string(i));
+  using C = axis::category<std::string>;
+  auto h = make_histogram_with(make_storage(Tag{}), C(cats), C(cats), C(cats),
+                               axis::regular<>(n, 0.0, 10.0 * n));
+  for (auto&& v : unsafe_access::storage(h)) v = 1.0;
+  return h;
+}
+
+// mirrors the boost-histogram python benchmark: h[loc(a), loc(b), loc(c), :]
+template <class Tag>
+static void Pick(benchmark::State& state, Tag) {
+  const int n = static_cast<int>(state.range(0));
+  const auto h = make_category_histogram(Tag{}, n);
+  std::vector<algorithm::reduce_command> opts;
+  for (int i = 0; i < 3; ++i) opts.push_back(algorithm::pick(i, {13 % n}));
+  run_reduce(state, h, opts);
+}
+
+template <class Tag>
+static void PickCrop(benchmark::State& state, Tag) {
+  const int n = static_cast<int>(state.range(0));
+  const auto h = make_category_histogram(Tag{}, n);
+  std::vector<algorithm::reduce_command> opts;
+  for (int i = 0; i < 3; ++i)
+    opts.push_back(algorithm::pick(i, {13 % n}, algorithm::slice_mode::crop));
+  run_reduce(state, h, opts);
+}
+
+template <class Tag>
+static void PickAndSlice(benchmark::State& state, Tag) {
+  const int n = static_cast<int>(state.range(0));
+  const auto h = make_category_histogram(Tag{}, n);
+  std::vector<algorithm::reduce_command> opts;
+  opts.push_back(algorithm::slice(0, 3, 29 % n));
+  for (int i = 1; i < 3; ++i) opts.push_back(algorithm::pick(i, {13 % n}));
+  run_reduce(state, h, opts);
+}
+
 #define BENCH(Type, Tag, Dim)                              \
   BENCHMARK_CAPTURE(Type, (Tag, Dim), Tag{}, Dim_t<Dim>{}) \
       ->RangeMultiplier(4)                                 \
@@ -110,3 +152,8 @@ BENCH(ShrinkAndRebin, unlimited, 2);
 BENCH(Rebin, unlimited, 3);
 BENCH(Shrink, unlimited, 3);
 BENCH(ShrinkAndRebin, unlimited, 3);
+
+BENCHMARK_CAPTURE(Pick, (dense), dense{})->Arg(32);
+BENCHMARK_CAPTURE(PickCrop, (dense), dense{})->Arg(32);
+BENCHMARK_CAPTURE(PickAndSlice, (dense), dense{})->Arg(32);
+BENCHMARK_CAPTURE(Pick, (unlimited), unlimited{})->Arg(32);

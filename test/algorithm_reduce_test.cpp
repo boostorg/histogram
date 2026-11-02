@@ -12,6 +12,7 @@
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
+#include <boost/histogram/indexed.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <vector>
@@ -518,11 +519,35 @@ void run_tests() {
     BOOST_TEST_EQ(hr.at(1, 1), 4);
     BOOST_TEST_EQ(hr.at(2, 1), 0);
   }
+
+  // large axes; the lookup tables of reduce do not fit on the stack
+  {
+    auto h = make_s(Tag(), std::vector<int>(), R(300, 0, 300), ID(0, 300));
+    for (auto&& x : indexed(h, coverage::all)) *x = x.index(0) + 1;
+    auto hr = reduce(h, shrink_and_rebin(0, 10, 290, 10), slice(1, 100, 200));
+    BOOST_TEST_EQ(hr.axis(0), R(28, 10, 290));
+    BOOST_TEST_EQ(hr.axis(1), ID(100, 200));
+    BOOST_TEST_EQ(sum(hr), sum(h));
+    // bin k of axis 0 merges original bins 10k+10..10k+19 of weight (index + 1)
+    for (int k = 0; k < 28; ++k) BOOST_TEST_EQ(hr.at(k, 0), 10 * (10 * k + 11) + 45);
+    BOOST_TEST_EQ(hr.at(-1, 0), 10 * 1 + 45); // bins 0..9, original underflow is 0
+    BOOST_TEST_EQ(hr.at(28, 0), 10 * 291 + 45 + 301); // bins 290..299 + original overflow
+  }
 }
 
 int main() {
   run_tests<static_tag>();
   run_tests<dynamic_tag>();
+
+  // zero-dimensional histogram
+  {
+    auto h = make_histogram(std::vector<axis::regular<>>());
+    BOOST_TEST_EQ(h.rank(), 0);
+    unsafe_access::storage(h)[0] = 3;
+    auto hr = reduce(h, std::vector<reduce_command>());
+    BOOST_TEST_EQ(hr.rank(), 0);
+    BOOST_TEST_EQ(unsafe_access::storage(hr)[0], 3);
+  }
 
   return boost::report_errors();
 }

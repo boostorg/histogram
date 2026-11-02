@@ -36,8 +36,7 @@ struct reduce_command {
   unsigned merge = 0;                    // default value indicates unset option
   bool crop = false;
   // for internal use by the reduce algorithm
-  axis::index_type reduced_end = 0;  // overflow index of the new axis
-  std::vector<axis::index_type> lut; // pick: maps old bin index to new bin index
+  axis::index_type reduced_end = 0; // overflow index of the new axis
   bool is_ordered = true;
   bool use_underflow_bin = true;
   bool use_overflow_bin = true;
