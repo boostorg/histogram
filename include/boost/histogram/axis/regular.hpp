@@ -314,16 +314,18 @@ public:
         return static_cast<index_type>(z * size());
       }
     } else {
-      if (z < 1) {
-        if (z >= 0)
-          return static_cast<index_type>(z * size());
-        else
-          return -1;
-      }
+      // Branch-free so that random data does not mispredict. The clamped value
+      // keeps the conversion to int in range for any input. fmin(NaN, 1) is 1,
+      // so NaN maps to size(); the order of fmin and fmax matters.
+      const bool below = z < 0;
+      const auto zc = std::fmax(std::fmin(z, decltype(z){1}), decltype(z){0});
+      index_type i = static_cast<index_type>(zc * size());
+      i = below ? -1 : i;
       // upper edge of last bin is inclusive if overflow bin is not present
-      if (!options_type::test(option::overflow) && z == 1) return size() - 1;
+      if (!options_type::test(option::overflow)) i -= static_cast<index_type>(z == 1);
+      return i; // size() if x is NaN
     }
-    return size(); // also returned if x is NaN
+    return size();
   }
 
   /// Returns index and shift (if axis has grown) for the passed argument.

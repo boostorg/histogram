@@ -105,7 +105,8 @@ struct index_visitor {
   template <class T>
   void linearize_element(std::false_type, pointer it, const T& x) const {
     // no axis is growing
-    linearize(*it, stride_, axis_, try_cast<value_type, std::invalid_argument>(x));
+    linearize_branchless(*it, stride_, axis_,
+                         try_cast<value_type, std::invalid_argument>(x));
   }
 
   template <class T>
@@ -215,11 +216,30 @@ void fill_n_storage(S& s, const Index idx, weight_type<T>&& w, Ts&&... ps) noexc
   (void)std::initializer_list<int>{(ps.second ? (++ps.first, 0) : 0)...};
 }
 
+template <class Index>
+std::size_t compact_indices(std::false_type, Index*, const std::size_t n) noexcept {
+  return n;
+}
+
+// Move the valid indices to the front and return their number. The storage loop
+// then has no data-dependent branch, which mispredicts on partly out-of-range data.
+inline std::size_t compact_indices(std::true_type, optional_index* indices,
+                                   const std::size_t n) noexcept {
+  std::size_t m = 0;
+  for (std::size_t i = 0; i < n; ++i) {
+    const optional_index idx = indices[i];
+    indices[m] = idx;
+    m += is_valid(idx);
+  }
+  return m;
+}
+
 // general Nd treatment
 template <class Index, class S, class A, class T, class... Ts>
 void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
                const T* values, Ts&&... ts) {
-  constexpr std::size_t buffer_size = 1ul << 14;
+  // 32 kB of indices; a larger buffer spills out of L1 and slows the passes below
+  constexpr std::size_t buffer_size = 1ul << 12;
   Index indices[buffer_size];
 
   /*
@@ -254,8 +274,13 @@ void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t 
     const std::size_t n = (std::min)(buffer_size, vsize - start);
     // fill buffer of indices...
     fill_n_indices(indices, start, n, offset, storage, axes, values);
+    // ...drop invalid indices without branching, if no other arrays are passed...
+    const std::size_t m =
+        compact_indices(mp11::mp_bool<(sizeof...(Ts) == 0 &&
+                                       std::is_same<Index, optional_index>::value)>{},
+                        indices, n);
     // ...and fill corresponding storage cells
-    for (auto&& idx : make_span(indices, n))
+    for (auto&& idx : make_span(indices, m))
       fill_n_storage(storage, idx, std::forward<Ts>(ts)...);
   }
 }
