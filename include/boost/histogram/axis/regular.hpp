@@ -315,10 +315,10 @@ public:
       }
     } else {
       // Branch-free so that random data does not mispredict. The clamped value
-      // keeps the conversion to int in range for any input, including NaN.
+      // keeps the conversion to int in range for any input. fmin(NaN, 1) is 1,
+      // so NaN maps to size(); the order of fmin and fmax matters.
       const bool below = z < 0;
-      const bool above = !(z < 1); // also true for NaN
-      const auto zc = above ? 1 : (below ? 0 : z);
+      const auto zc = std::fmax(std::fmin(z, decltype(z){1}), decltype(z){0});
       index_type i = static_cast<index_type>(zc * size());
       i = below ? -1 : i;
       // upper edge of last bin is inclusive if overflow bin is not present
