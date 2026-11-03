@@ -105,7 +105,8 @@ struct index_visitor {
   template <class T>
   void linearize_element(std::false_type, pointer it, const T& x) const {
     // no axis is growing
-    linearize(*it, stride_, axis_, try_cast<value_type, std::invalid_argument>(x));
+    linearize_branchless(*it, stride_, axis_,
+                         try_cast<value_type, std::invalid_argument>(x));
   }
 
   template <class T>

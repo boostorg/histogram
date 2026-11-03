@@ -42,8 +42,31 @@ std::size_t linearize(Opts, optional_index& out, const std::size_t stride,
   constexpr bool o = Opts::test(axis::option::overflow);
   assert(idx >= -1);
   assert(idx < size + 1);
-  // Branch-free, because data that is partly out of range mispredicts the checks.
-  // A mask of all ones is also invalid_index, so an invalid input stays invalid.
+  const bool is_valid = (u || idx >= 0) && (o || idx < size);
+  if (is_valid)
+    out += idx * stride;
+  else
+    out = invalid_index;
+  return size + u + o;
+}
+
+template <class Opts>
+std::size_t linearize_branchless(Opts opts, std::size_t& out, const std::size_t stride,
+                                 const axis::index_type size,
+                                 const axis::index_type idx) {
+  return linearize(opts, out, stride, size, idx);
+}
+
+// Used by fill_n, where data that is partly out of range mispredicts the checks.
+// A mask of all ones is also invalid_index, so an invalid input stays invalid.
+template <class Opts>
+std::size_t linearize_branchless(Opts, optional_index& out, const std::size_t stride,
+                                 const axis::index_type size,
+                                 const axis::index_type idx) {
+  constexpr bool u = Opts::test(axis::option::underflow);
+  constexpr bool o = Opts::test(axis::option::overflow);
+  assert(idx >= -1);
+  assert(idx < size + 1);
   const bool valid = (u | (idx >= 0)) & (o | (idx < size)) & is_valid(out);
   const auto mask = static_cast<std::size_t>(0) - static_cast<std::size_t>(!valid);
   out.value = (out.value + static_cast<std::size_t>(idx) * stride) | mask;
@@ -57,6 +80,14 @@ std::size_t linearize(Index& out, const std::size_t stride, const Axis& ax,
   constexpr auto opts = axis::traits::get_options<Axis>{} &
                         (axis::option::underflow | axis::option::overflow);
   return linearize(opts, out, stride, ax.size(), axis::traits::index(ax, v));
+}
+
+template <class Index, class Axis, class Value>
+std::size_t linearize_branchless(Index& out, const std::size_t stride, const Axis& ax,
+                                 const Value& v) {
+  constexpr auto opts = axis::traits::get_options<Axis>{} &
+                        (axis::option::underflow | axis::option::overflow);
+  return linearize_branchless(opts, out, stride, ax.size(), axis::traits::index(ax, v));
 }
 
 /**
