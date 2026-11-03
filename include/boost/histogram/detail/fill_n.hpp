@@ -219,7 +219,8 @@ void fill_n_storage(S& s, const Index idx, weight_type<T>&& w, Ts&&... ps) noexc
 template <class Index, class S, class A, class T, class... Ts>
 void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
                const T* values, Ts&&... ts) {
-  constexpr std::size_t buffer_size = 1ul << 14;
+  // 32 kB of indices; a larger buffer spills out of L1 and slows the passes below
+  constexpr std::size_t buffer_size = 1ul << 12;
   Index indices[buffer_size];
 
   /*
